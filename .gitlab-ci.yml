@@ -1,0 +1,126 @@
+# Stages definition
+# https://insomnius-studio.medium.com/automated-deployment-of-golang-applications-to-vm-with-gitlab-ci-cd-0b70afc921f2
+stages:
+  - build_pp
+#  - deploy_pp
+  - build_prod
+  - deploy_prod
+  - test_prod
+
+
+###################################
+## PP ENV
+###################################
+build_pp:
+  stage: build_pp
+  image: docker:20.10.16
+  when: manual
+  services:
+    - docker:20.10.16-dind
+  only:
+    - master
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - sed -i "s/<CI_NETRC_LOGIN>/${CI_NETRC_LOGIN}/g" Dockerfile
+    - sed -i "s/<CI_NETRC_TOKEN>/${CI_NETRC_TOKEN}/g" Dockerfile
+    - sed -i "s/<CI_GITLAB_USER>/${CI_GITLAB_USER}/g" Dockerfile
+    - sed -i "s/<CI_GITLAB_PASSWORD>/${CI_GITLAB_PASSWORD}/g" Dockerfile
+    - cat $PP_ENV > .env
+    - docker build -t registry.gitlab.com/wordbyword.io/microservices/gateways/gateway-api:latest .
+    - docker push registry.gitlab.com/wordbyword.io/microservices/gateways/gateway-api:latest
+
+#deploy_pp:
+#  stage: deploy_pp
+#  image: ubuntu:latest
+#  when: manual
+#  only:
+#    - master
+#  before_script:
+#    - apt update && apt install openssh-client -y
+#    - mkdir -p ~/.ssh/
+#    - echo "$PP_SSH_PRIVATE_KEY" >> ~/.ssh/id_rsa
+#    - echo "$PP_SSH_PUBLIC_KEY" >> ~/.ssh/id_rsa.pub
+#    - ssh-keyscan -H $PP_SERVER_HOST >> ~/.ssh/known_hosts
+#    - VERSION=$(echo "$CI_COMMIT_REF_NAME" | sed 's/^v//')
+#    - chmod 600 ~/.ssh/id_rsa
+#    - chmod 600 ~/.ssh/id_rsa.pub
+#  script:
+#    - ssh -tt $PP_SERVER_USER@$PP_SERVER_HOST "
+#      cd /var/www/wordbyword_io/deployment &&
+#      docker pull registry.gitlab.com/wordbyword.io/microservices/gateways/gateway-api:latest &&
+#      docker compose --project-name wbw-pp -f docker-compose.pp.yml down -v wbw-gateway-api &&
+#      docker compose --project-name wbw-pp -f docker-compose.pp.yml up -d --no-deps --build wbw-gateway-api
+#      "
+
+##################################
+# PROD ENV
+##################################
+build_prod:
+  stage: build_prod
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  only:
+    - tags
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - VERSION=$(echo "$CI_COMMIT_REF_NAME" | sed 's/^v//')
+  script:
+    - sed -i "s/<CI_NETRC_LOGIN>/${CI_NETRC_LOGIN}/g" Dockerfile
+    - sed -i "s/<CI_NETRC_TOKEN>/${CI_NETRC_TOKEN}/g" Dockerfile
+    - sed -i "s/<CI_GITLAB_USER>/${CI_GITLAB_USER}/g" Dockerfile
+    - sed -i "s/<CI_GITLAB_PASSWORD>/${CI_GITLAB_PASSWORD}/g" Dockerfile
+    - cat $PROD_ENV > .env
+    - sed -i "s/^VERSION=.*$/VERSION=$VERSION/g" .env
+    - docker build -t registry.gitlab.com/wordbyword.io/microservices/gateways/gateway-api:$VERSION .
+    - docker push registry.gitlab.com/wordbyword.io/microservices/gateways/gateway-api:$VERSION
+
+deploy_prod:
+  stage: deploy_prod
+  image: ubuntu:latest
+  when: manual
+  only:
+    - tags
+  before_script:
+    - apt update && apt install openssh-client -y
+    - mkdir -p ~/.ssh/
+    - echo "$PROD_SSH_PRIVATE_KEY" >> ~/.ssh/id_rsa
+    - echo "$PROD_SSH_PUBLIC_KEY" >> ~/.ssh/id_rsa.pub
+    - ssh-keyscan -H $PROD_SERVER_HOST >> ~/.ssh/known_hosts
+    - VERSION=$(echo "$CI_COMMIT_REF_NAME" | sed 's/^v//')
+    - chmod 600 ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa.pub
+  script:
+    - ssh -tt $PROD_SERVER_USER@$PROD_SERVER_HOST "
+      cd /var/www/wordbyword_io/deployment &&
+      git pull origin master &&
+      docker pull registry.gitlab.com/wordbyword.io/microservices/gateways/gateway-api:$VERSION &&
+      sed -i "s/^GATEWAY_API_TAG=.*$/GATEWAY_API_TAG=$VERSION/g" versions_prod.env &&
+      docker compose --project-name wbw-prod -f docker-compose.prod.yml down -v wbw-gateway-api &&
+      docker compose --project-name wbw-prod -f docker-compose.prod.yml --env-file versions_prod.env up -d --no-deps --build wbw-gateway-api &&
+      git add . &&
+      git commit -m 'UPDATED_PROD_TAG = gateway-api:$VERSION' &&
+      git push origin master
+      "
+## Работает, по пока убрал
+# Но нужно переработать и как то запускать тесты в докере а не на сервере
+#test_prod:
+#  stage: test_prod
+#  image: golang:1.22.2-alpine3.18
+#  when: manual
+#  only:
+#    - tags
+#  before_script:
+#    - apk add --no-cache openssh
+#    - mkdir -p ~/.ssh/
+#    - echo "$PROD_SSH_PRIVATE_KEY" >> ~/.ssh/id_rsa
+#    - echo "$PROD_SSH_PUBLIC_KEY" >> ~/.ssh/id_rsa.pub
+#    - ssh-keyscan -H $PROD_SERVER_HOST >> ~/.ssh/known_hosts
+#    - chmod 600 ~/.ssh/id_rsa
+#    - chmod 600 ~/.ssh/id_rsa.pub
+#  script:
+#    - ssh -tt $PROD_SERVER_USER@$PROD_SERVER_HOST "
+#      cd /var/www/wordbyword_io/deployment &&
+#      make start-integration-test
+#      "

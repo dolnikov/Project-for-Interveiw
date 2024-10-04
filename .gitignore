@@ -1,0 +1,8 @@
+#IDE settings
+/.idea
+
+# environment settings
+.env
+
+# vendor
+/vendor

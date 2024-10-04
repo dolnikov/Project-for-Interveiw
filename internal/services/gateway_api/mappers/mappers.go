@@ -1,0 +1,44 @@
+package mappers
+
+import (
+	GatewayApiProto "gitlab.com/wbwapis/go-genproto/wbw/gateway/gateway_api/v1"
+	SpeakerApiProto "gitlab.com/wbwapis/go-genproto/wbw/speaker/speaker_api/v1"
+	UserApiProto "gitlab.com/wbwapis/go-genproto/wbw/user/user_api/v1"
+	VocabularyApiProto "gitlab.com/wbwapis/go-genproto/wbw/vocabulary/vocabulary_api/v1"
+)
+
+var VocabularyStatusToGatewayStatus = map[VocabularyApiProto.StatusType]GatewayApiProto.StatusType{
+	VocabularyApiProto.StatusType_STATUS_TYPE_UNKNOWN:   GatewayApiProto.StatusType_STATUS_TYPE_UNKNOWN,
+	VocabularyApiProto.StatusType_STATUS_TYPE_NEW:       GatewayApiProto.StatusType_STATUS_TYPE_NEW,
+	VocabularyApiProto.StatusType_STATUS_TYPE_RECOGNIZE: GatewayApiProto.StatusType_STATUS_TYPE_RECOGNIZE,
+	VocabularyApiProto.StatusType_STATUS_TYPE_FAMILIAR:  GatewayApiProto.StatusType_STATUS_TYPE_FAMILIAR,
+	VocabularyApiProto.StatusType_STATUS_TYPE_LEARNED:   GatewayApiProto.StatusType_STATUS_TYPE_LEARNED,
+	VocabularyApiProto.StatusType_STATUS_TYPE_KNOWN:     GatewayApiProto.StatusType_STATUS_TYPE_KNOWN,
+}
+
+var GatewayStatusToVocabularyStatus = map[GatewayApiProto.StatusType]VocabularyApiProto.StatusType{
+	GatewayApiProto.StatusType_STATUS_TYPE_UNKNOWN:   VocabularyApiProto.StatusType_STATUS_TYPE_UNKNOWN,
+	GatewayApiProto.StatusType_STATUS_TYPE_NEW:       VocabularyApiProto.StatusType_STATUS_TYPE_NEW,
+	GatewayApiProto.StatusType_STATUS_TYPE_RECOGNIZE: VocabularyApiProto.StatusType_STATUS_TYPE_RECOGNIZE,
+	GatewayApiProto.StatusType_STATUS_TYPE_FAMILIAR:  VocabularyApiProto.StatusType_STATUS_TYPE_FAMILIAR,
+	GatewayApiProto.StatusType_STATUS_TYPE_LEARNED:   VocabularyApiProto.StatusType_STATUS_TYPE_LEARNED,
+	GatewayApiProto.StatusType_STATUS_TYPE_KNOWN:     VocabularyApiProto.StatusType_STATUS_TYPE_KNOWN,
+}
+
+var GatewayGenderTypeToSpeakerApiGenderType = map[GatewayApiProto.SpeakerGenderType]SpeakerApiProto.SpeakerGenderType{
+	GatewayApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_UNKNOWN: SpeakerApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_UNKNOWN,
+	GatewayApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_MALE:    SpeakerApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_MALE,
+	GatewayApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_FEMALE:  SpeakerApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_FEMALE,
+}
+
+var GatewayGenderTypeToUserApiGenderType = map[GatewayApiProto.SpeakerGenderType]UserApiProto.SpeakerGenderType{
+	GatewayApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_UNKNOWN: UserApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_UNKNOWN,
+	GatewayApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_MALE:    UserApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_MALE,
+	GatewayApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_FEMALE:  UserApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_FEMALE,
+}
+
+var UserApiGenderTypeToGatewayGenderType = map[UserApiProto.SpeakerGenderType]GatewayApiProto.SpeakerGenderType{
+	UserApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_UNKNOWN: GatewayApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_UNKNOWN,
+	UserApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_MALE:    GatewayApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_MALE,
+	UserApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_FEMALE:  GatewayApiProto.SpeakerGenderType_SPEAKER_GENDER_TYPE_FEMALE,
+}
